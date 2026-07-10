@@ -1,34 +1,4 @@
 ;; kotoba.geo constants — extracted from kami-geo (Rust) hardcoded literals.
 ;;
 ;; Ported verbatim from kami-engine/kami-geo/src/{projection,tile}.rs.
-{;; Web Mercator (EPSG:3857) tile size in pixels. Standard slippy-map tile.
- :tile-size-px 256.0
-
- ;; Web Mercator representable latitude range (±85.0511287798...°), beyond
- ;; which the projection diverges to infinity. Source: projection.rs
- ;; `clamp_lat` — literal 85.051_128_78.
- :lat-clamp-deg 85.05112878
-
- ;; Ground resolution constant for Web Mercator meters-per-pixel at zoom 0,
- ;; equator (2 * pi * 6378137 / 256). Source: mesh.rs `flat_tile_patch_from_dem`
- ;; literal 156_543.033_92.
- :ground-resolution-zoom0 156543.03392
-
- ;; Default terrain relief scale factor applied to `globe-tile-patch`
- ;; (radius * 0.028). Source: mesh.rs `globe_tile_patch`.
- :globe-default-terrain-scale-ratio 0.028
-
- ;; Maximum tiles kept in the (GPU-backed) tile cache before LRU eviction.
- ;; Source: tile.rs `MAX_CACHED_TILES`.
- :max-cached-tiles 512
-
- ;; DEM height clamp applied to `flat-tile-patch-from-dem` (world-px units).
- ;; Source: mesh.rs literal `.clamp(-4096.0, 4096.0)`.
- :dem-height-clamp-px 4096.0
-
- ;; fbm2 / ridged-fbm2 defaults used by `globe-relief-height`.
- :relief {:continent {:octaves 4 :lacunarity 2.0 :gain 0.52}
-          :shelf {:octaves 3 :lacunarity 2.1 :gain 0.5}
-          :ridges {:octaves 5 :lacunarity 2.05 :gain 0.56}
-          :hills {:octaves 4 :lacunarity 2.0 :gain 0.5}
-          :ocean {:octaves 3 :lacunarity 2.2 :gain 0.45}}}
+[{:db/id -1, :geo.constants/tile-size-px 256.0, :geo.constants/lat-clamp-deg 85.05112878, :geo.constants/ground-resolution-zoom0 156543.03392, :geo.constants/globe-default-terrain-scale-ratio 0.028, :geo.constants/max-cached-tiles 512, :geo.constants/dem-height-clamp-px 4096.0, :geo.constants/relief "{:continent {:octaves 4, :lacunarity 2.0, :gain 0.52}, :shelf {:octaves 3, :lacunarity 2.1, :gain 0.5}, :ridges {:octaves 5, :lacunarity 2.05, :gain 0.56}, :hills {:octaves 4, :lacunarity 2.0, :gain 0.5}, :ocean {:octaves 3, :lacunarity 2.2, :gain 0.45}}"}]
