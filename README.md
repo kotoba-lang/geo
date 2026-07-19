@@ -10,6 +10,13 @@ This is a **domain port**, not a renderer. No network, no I/O, no GPU calls
 in any `kotoba.geo.*` namespace — every function is a pure transform over
 plain Clojure data (maps/vectors), portable across JVM / ClojureScript / SCI.
 
+`src/kotoba/geo_golden.kotoba` is the first native Kotoba policy-v7
+qualification slice. It covers the Tokyo Web Mercator forward/inverse golden
+and an outward-facing globe-patch triangle using explicit f64 arithmetic and
+qualified sin/cos, exp/log, and atan2. CI compares the CLJC oracle with the
+Kotoba reference executor, restricted JavaScript, and typed Wasm. General
+map/vector mesh APIs remain CLJC until a structured f64 ABI is qualified.
+
 ## Origin
 
 Ported from `kami-engine/kami-geo` (Rust), part of the
