@@ -411,6 +411,84 @@
         (combine-meshes (map #(globe-polygon-to-fill-earcut-simple % radius elevation) subrings))
         (globe-polygon-to-fill-earcut-simple ring-lng-lat radius elevation)))))
 
+(defn globe-polygon-to-extrude-earcut
+  "Extrude a polygon footprint upward from the globe surface.
+
+  The globe-frame counterpart of `polygon-to-extrude-earcut`, which does
+  the same thing in the flat world-pixel frame. Both a flat extrude and a
+  globe FILL already existed; this was the missing cell, and a caller
+  wanting extruded buildings on a sphere had no choice but to re-derive
+  sphere positions outside the library.
+
+  `base` and `height` are in the same units as `radius`, measured from the
+  surface: a building whose roof is 40 m up on an earth-radius-1 globe is
+  `height` 40/6371000.
+
+  Emits a roof cap at `base + height` plus one outward-facing quad per
+  edge. Sidewall normals are the OUTWARD HORIZONTAL direction at that
+  edge -- the surface normal would light every wall as though it were a
+  roof, and a building lit like its own roof reads as a flat patch of
+  colour rather than a solid.
+
+  Antimeridian handling is inherited from `globe-polygon-to-fill-earcut`
+  for the roof. A single building never spans the dateline, but a caller
+  passing an arbitrary ring gets the same protection the fill has."
+  [ring-lng-lat radius base height]
+  (if (or (< (count ring-lng-lat) 3) (<= height 0.0))
+    empty-mesh
+    (let [ring (if (and (>= (count ring-lng-lat) 2)
+                        (= (first ring-lng-lat) (peek (vec ring-lng-lat))))
+                 (subvec (vec ring-lng-lat) 0 (dec (count ring-lng-lat)))
+                 (vec ring-lng-lat))
+          n (count ring)]
+      (if (< n 3)
+        empty-mesh
+        (let [top (+ base height)
+              roof (globe-polygon-to-fill-earcut ring radius top)
+              roof-vertex-count (quot (count (:vertices roof)) 8)
+              ;; The ring's centroid, only to orient the wall normals
+              ;; outward. Longitudes are unwrapped against the first point
+              ;; so a ring near +/-180 does not average to the far side of
+              ;; the planet.
+              anchor (first (first ring))
+              cx (/ (reduce + (map (fn [[lng _]] (unwrap-lng lng anchor)) ring)) n)
+              cy (/ (reduce + (map second ring)) n)
+              walls (reduce
+                     (fn [{:keys [vertices indices]} i]
+                       (let [[alng alat] (nth ring i)
+                             [blng blat] (nth ring (mod (inc i) n))
+                             au (unwrap-lng alng anchor)
+                             bu (unwrap-lng blng anchor)
+                             mid-lng (* 0.5 (+ au bu))
+                             mid-lat (* 0.5 (+ alat blat))
+                             ;; Outward = from the centroid towards the edge
+                             ;; midpoint, taken on the sphere so the normal
+                             ;; is a real direction rather than a lng/lat
+                             ;; difference (which is not a vector).
+                             mid-pos (sphere-position mid-lng mid-lat radius)
+                             ctr-pos (sphere-position cx cy radius)
+                             out0 (vec3/sub mid-pos ctr-pos)
+                             nrm (if (< (vec3/length out0) 1e-12)
+                                   (sphere-normal mid-lng mid-lat)
+                                   (vec3/normalize out0))
+                             a0 (sphere-position alng alat (+ radius base))
+                             b0 (sphere-position blng blat (+ radius base))
+                             a1 (sphere-position alng alat (+ radius top))
+                             b1 (sphere-position blng blat (+ radius top))
+                             bi (+ roof-vertex-count (quot (count vertices) 8))]
+                         {:vertices (into vertices
+                                          (concat a0 nrm [0.0 0.0]
+                                                  b0 nrm [1.0 0.0]
+                                                  b1 nrm [1.0 1.0]
+                                                  a1 nrm [0.0 1.0]))
+                          :indices (into indices
+                                         [bi (inc bi) (+ bi 2)
+                                          bi (+ bi 2) (+ bi 3)])}))
+                     {:vertices [] :indices []}
+                     (range n))]
+          {:vertices (into (:vertices roof) (:vertices walls))
+           :indices (into (:indices roof) (:indices walls))})))))
+
 (defn globe-points-to-circles
   "Circle discs tangent to the globe surface."
   [points-lng-lat radius disc-radius elevation segments]

@@ -176,3 +176,88 @@
           lerp (/ (+ north south) 2.0)]
       (is (> (Math/abs (- mid lerp)) 20.0)
           (str "expected a large disagreement at z1; got " (Math/abs (- mid lerp)))))))
+
+;; ---------------------------------------------------------------------------
+;; Globe extrusion
+;;
+;; The library already had a FLAT extrude and a GLOBE fill. This was the
+;; missing cell, and without it a caller wanting extruded buildings on a
+;; sphere had to re-derive sphere positions outside the library -- which is
+;; how a marker ends up a few degrees off the coastline under it.
+
+(defn- unit-square [lng lat d]
+  [[lng lat] [(+ lng d) lat] [(+ lng d) (+ lat d)] [lng (+ lat d)]])
+
+(defn- verts-of [m] (vec (partition 8 (:vertices m))))
+(defn- radius-of [[x y z]] (Math/sqrt (+ (* x x) (* y y) (* z z))))
+
+(deftest globe-extrude-emits-a-roof-and-one-quad-per-edge
+  (let [ring (unit-square 139.7 35.6 0.001)
+        m (mesh/globe-polygon-to-extrude-earcut ring 1.0 0.0 0.01)
+        vs (verts-of m)]
+    ;; 4 roof vertices + 4 walls x 4 vertices.
+    (is (= 20 (count vs)))
+    ;; 2 roof triangles + 4 walls x 2 triangles.
+    (is (= (* 3 (+ 2 8)) (count (:indices m))))
+    (is (every? #(< % (count vs)) (:indices m))
+        "an index past the vertex count draws garbage, or nothing")))
+
+(deftest globe-extrude-puts-the-roof-above-the-base
+  (let [ring (unit-square 0.0 0.0 0.01)
+        base 0.02 height 0.05
+        m (mesh/globe-polygon-to-extrude-earcut ring 1.0 base height)
+        rs (map (comp radius-of vec #(take 3 %)) (verts-of m))]
+    (is (< (Math/abs (- (apply max rs) (+ 1.0 base height))) 1e-9)
+        "the highest vertex must sit at radius + base + height")
+    (is (< (Math/abs (- (apply min rs) (+ 1.0 base))) 1e-9)
+        "the lowest vertex must sit at radius + base, not on the surface")))
+
+(deftest globe-extrude-refuses-degenerate-input
+  (is (= mesh/empty-mesh (mesh/globe-polygon-to-extrude-earcut [[0.0 0.0] [1.0 1.0]] 1.0 0.0 0.1))
+      "two points are not a polygon")
+  (testing "a zero or negative height is refused rather than drawn flat --
+            a zero-height extrusion is coincident with the surface and
+            z-fights with the tile under it"
+    (is (= mesh/empty-mesh (mesh/globe-polygon-to-extrude-earcut
+                            (unit-square 0.0 0.0 0.01) 1.0 0.0 0.0)))
+    (is (= mesh/empty-mesh (mesh/globe-polygon-to-extrude-earcut
+                            (unit-square 0.0 0.0 0.01) 1.0 0.0 -1.0)))))
+
+(deftest globe-extrude-closes-an-explicitly-closed-ring-once
+  ;; GeoJSON and MVT rings repeat the first point at the end. Extruding
+  ;; that literally emits a degenerate zero-area wall, which renders as a
+  ;; seam or as nothing depending on the backend.
+  (let [open (unit-square 10.0 20.0 0.01)
+        closed (conj (vec open) (first open))
+        a (mesh/globe-polygon-to-extrude-earcut open 1.0 0.0 0.01)
+        b (mesh/globe-polygon-to-extrude-earcut closed 1.0 0.0 0.01)]
+    (is (= (count (:vertices a)) (count (:vertices b))))
+    (is (= (count (:indices a)) (count (:indices b))))))
+
+(deftest globe-extrude-wall-normals-point-outward-not-up
+  ;; The surface normal would light every wall as though it were a roof,
+  ;; and a building lit like its own roof reads as a flat patch of colour
+  ;; rather than a solid.
+  (let [ring (unit-square 0.0 0.0 0.02)
+        m (mesh/globe-polygon-to-extrude-earcut ring 1.0 0.0 0.05)
+        vs (verts-of m)
+        ;; The first 4 vertices are the roof; the rest are walls.
+        wall-normals (map #(vec (take 3 (drop 3 %))) (drop 4 vs))
+        centroid (mesh/globe-polygon-to-extrude-earcut ring 1.0 0.0 0.05)]
+    (is (seq wall-normals))
+    (doseq [n wall-normals]
+      (is (< (Math/abs (- 1.0 (radius-of n))) 1e-9) "wall normals must be unit length"))
+    (testing "and they disagree with each other -- four walls of a square
+              face four different directions, so a single shared normal
+              would mean they were all given the surface normal"
+      (is (< 2 (count (set (map #(mapv (fn [x] (Math/round (* 100 x))) %) wall-normals))))))))
+
+(deftest globe-extrude-agrees-with-the-globe-fill-about-where-the-roof-is
+  ;; The roof IS `globe-polygon-to-fill-earcut` at base+height. If the two
+  ;; ever disagree, a filled footprint and an extruded one drawn together
+  ;; would not line up.
+  (let [ring (unit-square 100.0 -30.0 0.01)
+        fill (mesh/globe-polygon-to-fill-earcut ring 1.0 0.06)
+        ext (mesh/globe-polygon-to-extrude-earcut ring 1.0 0.01 0.05)]
+    (is (= (:vertices fill) (vec (take (count (:vertices fill)) (:vertices ext))))
+        "the extrusion's roof must be exactly the fill at base+height")))
