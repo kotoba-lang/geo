@@ -272,13 +272,26 @@
 
 (defn- globe-tile-patch-from-heights
   [coord radius segments height-scale dem-heights dem-width dem-height]
-  (let [[west south east north] (proj/tile-lng-lat-bounds coord)
+  (let [[west _south east _north] (proj/tile-lng-lat-bounds coord)
         segs (long (max segments 2))
         stride (inc segs)
+        ;; Tile count per axis at this zoom, for the Mercator row -> latitude
+        ;; inverse below.
+        tiles-n (math/pow 2.0 (:z coord))
         idx-pairs (vec (for [iy (range (inc segs)) ix (range (inc segs))] [iy ix]))
         computed (mapv (fn [[iy ix]]
                           (let [v (/ (double iy) segs)
-                                lat (+ north (* (- south north) v))
+                                ;; Latitude comes back through the Mercator
+                                ;; inverse, NOT lerped between the tile's own
+                                ;; north and south. A raster tile's rows are
+                                ;; linear in Mercator y; latitude is the
+                                ;; inverse Gudermannian of it. Lerping put the
+                                ;; texture 24 degrees out of register at z0,
+                                ;; 15 at z1 and 0.5 at z3 -- a distortion that
+                                ;; looks like a projection choice rather than
+                                ;; a bug, which is why it survived.
+                                lat (proj/mercator-tile-y->lat
+                                     (+ (:y coord) v) tiles-n)
                                 u (/ (double ix) segs)
                                 lng (+ west (* (- east west) u))
                                 height (* (if dem-heights
