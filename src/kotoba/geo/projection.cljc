@@ -84,7 +84,16 @@
       (str/replace "{x}" (str x))
       (str/replace "{y}" (str y))))
 
-(defn- mercator-tile-y->lat [y n]
+(defn mercator-tile-y->lat
+  "Web Mercator tile row -> latitude in degrees. `y` may be fractional, and
+  that is the point: a raster tile's pixel rows are linear in MERCATOR y,
+  not in latitude, so anything sampling inside a tile has to come back
+  through this rather than interpolating between the tile's own bounds.
+
+  Public because `kotoba.geo.mesh` needs it per vertex. It was private, and
+  `globe-tile-patch` interpolated latitude linearly instead -- which put the
+  texture up to 24 degrees out of register at z0."
+  [y n]
   (let [merc-n (* math/pi (- 1.0 (/ (* 2.0 y) n)))]
     (math/to-degrees (math/atan (math/sinh merc-n)))))
 
