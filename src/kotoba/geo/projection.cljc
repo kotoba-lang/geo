@@ -15,7 +15,7 @@
   - `LngLat`    `{:lng <deg> :lat <deg>}`
   - `WorldPx`   `{:x <px> :y <px>}`
   - `TileCoord` `{:z <zoom-int> :x <tile-x> :y <tile-y>}`"
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kotoba.geo.constants :as k]
             [kotoba.geo.math :as math]))
 
