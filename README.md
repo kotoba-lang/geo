@@ -85,8 +85,8 @@ kami-engine history.
 ## Test
 
 ```sh
-clojure -M:test
-clojure -M:lint
+kbb -M:test
+kbb -M:lint
 ```
 
 ## License
