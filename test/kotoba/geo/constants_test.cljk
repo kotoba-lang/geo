@@ -12,7 +12,7 @@
   e.g. `:relief`) before comparing against the cljc mirror."
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.test :refer [deftest is]]
+            [kotoba.test :refer [deftest is]]
             [kotoba.geo.constants :as k]))
 
 (defn- unblob [v]

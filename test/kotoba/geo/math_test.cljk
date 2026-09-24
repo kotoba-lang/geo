@@ -4,7 +4,7 @@
   exists to port (these are thin JVM/CLJS trig/pow wrappers plus
   `to-radians`/`to-degrees`/`clamp`), so these exercise identities that
   must hold regardless of host."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.geo.math :as math]))
 
 (defn- close? [a b] (< (math/abs (- a b)) 1e-9))
