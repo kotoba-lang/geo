@@ -1,7 +1,7 @@
 (ns kotoba.geo.projection-test
   "Parity port of kami-engine/kami-geo/src/projection.rs `#[cfg(test)]`
   (Rust source deleted pre-commit; recovered from git history)."
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [kotoba.geo.math :as math]
             [kotoba.geo.projection :as proj]))
 

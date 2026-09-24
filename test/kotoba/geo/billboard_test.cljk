@@ -2,7 +2,7 @@
   "Smoke tests for `kotoba.geo.billboard` — kami-geo's `billboard.rs` had
   no `#[cfg(test)]` block in the recovered Rust source, so there is no
   parity fixture to port."
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [kotoba.geo.billboard :as billboard]))
 
 (deftest defaults

@@ -3,7 +3,7 @@
   helpers at the bottom of kami-geo's `mesh.rs` (`add3`/`sub3`/`mul3`/
   `cross3`/`normalize3`). No `#[cfg(test)]` fixture was recovered, so
   these check standard vector-algebra identities."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.geo.math :as math]
             [kotoba.geo.vec3 :as vec3]))
 

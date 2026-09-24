@@ -6,7 +6,7 @@
   boundedness, and the smoothstep/lerp building blocks the noise depends
   on, plus the octaves=1 identities that let fbm2/ridged-fbm2 degenerate
   to value-noise2."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.geo.math :as math]
             [kotoba.geo.noise :as noise]))
 

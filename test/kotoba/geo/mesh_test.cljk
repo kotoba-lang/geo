@@ -2,7 +2,7 @@
   "Parity port of kami-engine/kami-geo/src/mesh.rs `#[cfg(test)]` modules
   (`antimeridian_tests` and `tests`) — Rust source deleted pre-commit;
   recovered from git history."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.geo.mesh :as mesh]
             [kotoba.geo.projection :as proj]))
 

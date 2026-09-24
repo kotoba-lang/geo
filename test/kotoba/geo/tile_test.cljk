@@ -4,7 +4,7 @@
   fixture to port; these exercise the pure state-machine transitions this
   port introduces (imperative `&mut self` methods → pure fns over an
   immutable manager map)."
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [kotoba.geo.projection :as proj]
             [kotoba.geo.tile :as tile]))
 
