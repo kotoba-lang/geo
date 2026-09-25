@@ -11,7 +11,7 @@
   `:geo.constants/` namespace and un-blobbing any pr-str'd nested values,
   e.g. `:relief`) before comparing against the cljc mirror."
   (:require [kotoba.lang.edn :as edn]
-            [clojure.java.io :as io]
+            [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.geo.constants :as k]))
 
